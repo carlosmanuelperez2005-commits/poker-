@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Pro - 5 Asientos Bar Cubano</title>
+    <style>
+        body {
+            background: radial-gradient(circle at center, #2c1a0e 0%, #110803 100%);
+            color: #fef3c7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+            perspective: 1200px;
+        }
+        h1 { 
+            font-size: 12px; 
+            margin: 3px 0; 
+            color: #fbbf24; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(20, 10, 5, 0.9);
+            padding: 4px;
+            font-size: 10px;
+            border-bottom: 2px solid #b45309;
+        }
+        .header-info span { color: #34d399; font-weight: bold; }
+
+        #message {
+            font-size: 10px;
+            margin: 2px 0;
+            font-weight: bold;
+            color: #fde047;
+            height: 14px;
+        }
+
+        .info-btn {
+            position: absolute;
+            top: 38px;
+            right: 10px;
+            width: 26px;
+            height: 26px;
+            background: rgba(44, 26, 14, 0.95);
+            border: 2px solid #fbbf24;
+            border-radius: 6px;
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+            z-index: 50;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #1c120a;
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 340px;
+            padding: 15px;
+            text-align: left;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
+        }
+        .modal-content h3 { color: #fbbf24; margin-top: 0; font-size: 14px; text-align: center; }
+        .hand-rule { font-size: 10px; margin-bottom: 6px; border-bottom: 1px solid #451a03; padding-bottom: 4px; }
+        .hand-rule span { color: #34d399; font-weight: bold; }
+
+        .raise-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 110;
+            justify-content: center;
+            align-items: center;
+        }
+        .raise-content {
+            background: #1c120a;
+            border: 2px solid #ea580c;
+            border-radius: 12px;
+            padding: 15px;
+            width: 80%;
+            max-width: 280px;
+            box-shadow: 0 0 15px rgba(234, 88, 12, 0.6);
+        }
+        .raise-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .raise-chip-btn {
+            background: #ea580c;
+            color: white;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 0 6px #ea580c;
+        }
+        .raise-chip-btn:active { transform: scale(0.95); }
+
+        .poker-room {
+            position: relative;
+            width: 100vw;
+            max-width: 420px;
+            height: 330px;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+        }
+
+        .poker-table {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 320px;
+            height: 190px;
+            background: radial-gradient(circle, #065f46 10%, #022c22 90%);
+            border: 12px solid #3b1c05;
+            border-radius: 95px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.95), inset 0 0 30px rgba(0,0,0,0.8), 0 0 15px rgba(6,95,70,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-felt {
+            width: 280px;
+            height: 150px;
+            border: 2px dashed rgba(251, 191, 36, 0.4);
+            border-radius: 75px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            position: relative;
+        }
+
+        .bar-background-prop {
+            position: absolute;
+            top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .betting-spot {
+            background: rgba(28, 18, 10, 0.85);
+            border: 1px solid rgba(251, 191, 36, 0.6);
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 9px;
+            color: #fde047;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            z-index: 2;
+        }
+
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 3px;
+            min-height: 38px;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .card {
+            background: white;
+            color: black;
+            width: 26px;
+            height: 38px;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px;
+            font-weight: bold;
+            font-size: 9px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+            border: 1px solid transparent;
+            transition: all 0.3s;
+            transform: translateY(-10px) scale(0.6);
+            opacity: 0;
+            animation: slideInCard 0.25s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes slideInCard {
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .card.red { color: #dc2626; }
+        .card-back {
+            background: linear-gradient(135deg, #7c2d12 0%, #431407 100%);
+            border: 1px solid white;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .card.gold-glow {
+            border: 2px solid #fbbf24 !important;
+            box-shadow: 0 0 12px #fbbf24, inset 0 0 6px #fbbf24 !important;
+            transform: scale(1.05);
+        }
+
+        .card.red-glow {
+            border: 2px solid #ef4444 !important;
+            box-shadow: 0 0 12px #ef4444, inset 0 0 6px #ef4444 !important;
+            transform: scale(1.05);
+        }
+
+        /* 5 Asientos distribuidos alrededor de la mesa */
+        .seat {
+            position: absolute;
+            width: 68px;
+            height: 30px;
+            background: rgba(44, 26, 14, 0.95);
+            border: 2px solid #78350f;
+            border-radius: 15px;
+            font-size: 8px;
+            color: #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+            cursor: pointer;
+            z-index: 20;
+            transition: all 0.2s;
+        }
+        .seat:hover { border-color: #fbbf24; transform: scale(1.05); }
+        .seat.occupied {
+            background: #14532d;
+            border-color: #22c55e;
+            color: white;
+            cursor: default;
+        }
+        .seat.dealer-seat {
+            border-color: #f59e0b;
+        }
+
+        /* Posiciones exactas de los 5 asientos alrededor del óvalo */
+        #seat-0 { bottom: 0px; left: 50%; transform: translateX(-50%); }   /* Abajo (Tú por defecto) */
+        #seat-1 { bottom: 50px; left: 8px; }                                /* Abajo Izquierda */
+        #seat-2 { top: 10px; left: 8px; }                                   /* Arriba Izquierda */
+        #seat-3 { top: -2px; left: 50%; transform: translateX(-50%); }      /* Arriba Centro (Cantinero/Casa) */
+        #seat-4 { top: 10px; right: 8px; }                                  /* Arriba Derecha */
+
+        .player-hand-area {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            z-index: 25;
+        }
+
+        .dealer-area {
+            position: absolute;
+            top: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 25;
+        }
+
+        .stack-chips {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: -5px;
+            align-items: center;
+            filter: drop-shadow(0 3px 4px rgba(0,0,0,0.8));
+        }
+        .chip-3d {
+            width: 22px;
+            height: 11px;
+            border-radius: 50% / 40%;
+            border: 2px dashed rgba(255,255,255,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: bold;
+            color: white;
+            box-shadow: inset 0 2px 2px rgba(255,255,255,0.5), 0 2px 3px rgba(0,0,0,0.6);
+        }
+        .chip-50 { background: #dc2626; border-color: #fca5a5; }
+        .chip-100 { background: #16a34a; border-color: #86efac; }
+        .chip-500 { background: #2563eb; border-color: #93c5fd; }
+        .chip-1000 { background: #ca8a04; border-color: #fde047; }
+
+        .panel-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin: 4px auto;
+            max-width: 400px;
+            background: rgba(28, 18, 10, 0.9);
+            padding: 6px;
+            border-radius: 8px;
+            border: 1px solid #78350f;
+            font-size: 11px;
+        }
+
+        .controls {
+            margin: 4px auto 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 350px;
+            padding: 0 8px;
+        }
+        .neon-btn {
+            border: none;
+            padding: 8px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s;
+            width: 100%;
+        }
+        .neon-btn:active { transform: scale(0.95); }
+        .neon-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none !important; }
+
+        .btn-check { background: #10b981; color: #000; box-shadow: 0 0 10px #10b981; }
+        .btn-call { background: #0284c7; color: #fff; box-shadow: 0 0 10px #0284c7; }
+        .btn-raise { background: #ea580c; color: #fff; box-shadow: 0 0 10px #ea580c; }
+        .btn-allin { background: #eab308; color: #000; box-shadow: 0 0 12px #eab308; grid-column: span 2; }
+        .btn-fold { background: #e11d48; color: #fff; box-shadow: 0 0 10px #e11d48; }
+        .btn-start { background: #d97706; color: #fff; box-shadow: 0 0 10px #d97706; padding: 5px 10px; border-radius: 14px; }
+        .btn-leave { background: #b91c1c; color: #fff; box-shadow: 0 0 10px #b91c1c; padding: 5px 10px; border-radius: 14px; font-size: 10px; }
+    </style>
+</head>
+<body>
+
+    <button class="info-btn" onclick="toggleModal(true)">?</button>
+
+    <div class="modal" id="rules-modal">
+        <div class="modal-content">
+            <h3>🌴 Combinaciones de Póker 🥃</h3>
+            <div class="hand-rule"><span>1. Escalera Real:</span> 10, J, Q, K, A del mismo palo.</div>
+            <div class="hand-rule"><span>2. Escalera de Color:</span> 5 cartas consecutivas del mismo palo.</div>
+            <div class="hand-rule"><span>3. Póker:</span> 4 cartas del mismo valor.</div>
+            <div class="hand-rule"><span>4. Full House:</span> Trío + pareja.</div>
+            <div class="hand-rule"><span>5. Color:</span> 5 cartas del mismo palo.</div>
+            <div class="hand-rule"><span>6. Escalera:</span> 5 cartas consecutivas.</div>
+            <div class="hand-rule"><span>7. Trío:</span> 3 cartas del mismo valor.</div>
+            <div class="hand-rule"><span>8. Doble Pareja:</span> Dos pares.</div>
+            <div class="hand-rule"><span>9. Pareja:</span> 2 cartas iguales.</div>
+            <div class="hand-rule"><span>10. Carta Alta:</span> Máxima carta individual.</div>
+            <button class="neon-btn btn-fold" style="width:100%; margin-top:8px; padding:8px;" onclick="toggleModal(false)">Cerrar</button>
+        </div>
+    </div>
+
+    <div class="raise-modal" id="raise-modal">
+        <div class="raise-content">
+            <h3 style="color:#fbbf24; margin-top:0; font-size:13px;">Subir Apuesta (Ron & Cartas)</h3>
+            <div class="raise-options">
+                <button class="raise-chip-btn" onclick="selectRaiseAmount(50)">+$50</button>
+                <button class="raise-chip-btn" onclick="selectRaiseAmount(100)">+$100</button>
+                <button class="raise-chip-btn" onclick="selectRaiseAmount(200)">+$200</button>
+                <button class="raise-chip-btn" onclick="selectRaiseAmount(500)">+$500</button>
+            </div>
+            <button class="neon-btn btn-fold" style="width:100%; margin-top:10px; padding:6px;" onclick="toggleRaiseModal(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <h1>🥃 RINCÓN CUBANO - MESA DE 5 LUGARES 🇨🇺</h1>
+    
+    <div class="header-info">
+        <div>Banco Total: <span id="player-bank">$1,000</span></div>
+        <div>Fichas en Mesa: <span id="player-chips">$0</span></div>
+        <div>Pozo (Pot): <span id="table-pot" style="color:#facc15;">$0</span></div>
+    </div>
+
+    <div id="message">Toca un asiento libre y selecciona tu entrada para sentarte.</div>
+
+    <div class="panel-box" id="buyin-panel">
+        <span>Entrada:</span>
+        <select id="buyin-amount" style="background:#2c1a0e; color:white; border:1px solid #78350f; padding:3px; border-radius:4px; font-size:11px;">
+            <option value="500">$500</option>
+            <option value="1000" selected>$1,000</option>
+            <option value="5000">$5,000</option>
+        </select>
+        <button class="neon-btn btn-start" onclick="playButtonSound(); sitAtSelectedSeat()">Sentarse</button>
+    </div>
+
+    <div class="panel-box" id="leave-panel" style="display:none;">
+        <span style="font-size:10px; color:#facc15;">¿Cobrar fichas y levantarte?</span>
+        <button class="neon-btn btn-leave" onclick="playButtonSound(); leaveTable()">Retirarse de la Mesa</button>
+    </div>
+
+    <div class="poker-room">
+        <div class="poker-table">
+            <div class="table-felt">
+                <div class="bar-background-prop">
+                    <span>🥃</span>
+                    <span style="font-size: 28px;">🍾</span>
+                </div>
+                <div class="betting-spot">
+                    <span>POT:</span> <span id="table-pot-val" style="color:#fff; font-weight:bold;">$0</span>
+                </div>
+                <div style="font-size:7px; color:#fde047; letter-spacing:1px; z-index:2;">CARTAS COMUNITARIAS</div>
+                <div id="community-cards" class="cards-container"></div>
+            </div>
+        </div>
+
+        <!-- 5 Asientos Alrededor de la Mesa -->
+        <div id="seat-0" class="seat" onclick="selectSeat(0)"><b>Tú</b><span id="s0-status">Libre</span></div>
+        <div id="seat-1" class="seat" onclick="selectSeat(1)"><b>Asiento 1</b><span id="s1-status">Libre</span></div>
+        <div id="seat-2" class="seat" onclick="selectSeat(2)"><b>Asiento 2</b><span id="s2-status">Libre</span></div>
+        <div id="seat-3" class="seat dealer-seat" onclick="selectSeat(3)"><b>Cantinero</b><span id="s3-status">Casa</span></div>
+        <div id="seat-4" class="seat" onclick="selectSeat(4)"><b>Asiento 4</b><span id="s4-status">Libre</span></div>
+
+        <div class="dealer-area" id="dealer-area"></div>
+        <div class="player-hand-area" id="player-hand-area"></div>
+    </div>
+
+    <div class="controls" id="action-controls" style="display:none;">
+        <button class="neon-btn btn-check" onclick="playButtonSound(); playerAction('check')">CHECK</button>
+        <button class="neon-btn btn-call" onclick="playButtonSound(); playerAction('call')">IGUALAR</button>
+        <button class="neon-btn btn-raise" onclick="playButtonSound(); toggleRaiseModal(true)">SUBIR ⚙️</button>
+        <button class="neon-btn btn-allin" onclick="playButtonSound(); playerAction('allin')">⚡ ALL-IN</button>
+        <button class="neon-btn btn-fold" onclick="playButtonSound(); playerAction('fold')">FOLD</button>
+    </div>
+
+    <script>
+        let totalBank = 1000;
+        let tableChips = 0;
+        let dealerChips = 0;
+        let currentPot = 0;
+        let currentBet = 50;
+        let isSeated = false;
+        let selectedSeatIndex = 0;
+        let occupiedSeats = { 0: false, 1: false, 2: false, 3: true, 4: false }; // Asiento 3 es la casa por defecto
+        let gameRound = 0; 
+
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let fullCommunityCards = [];
+        let visibleCommunityCount = 0;
+        let visiblePlayerCardsCount = 0;
+        let visibleDealerCardsCount = 0;
+
+        let winningCardIndices = { hand: [], comm: [] };
+        let dealerWinningIndices = { hand: [], comm: [] };
+        let roundWinner = null;
+
+        let audioCtx = null;
+        let ambianceGain = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                startCasinoAmbiance();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+            } else {
+                if (audioCtx && audioCtx.state === 'suspended' && isSeated) audioCtx.resume();
+            }
+        });
+
+        function playButtonSound() {
+            initAudio();
+            if (!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.08);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function playRealCardSound() {
+            if (!audioCtx) return;
+            let bufferSize = audioCtx.sampleRate * 0.12;
+            let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            let data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.03));
+            }
+            let noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1200;
+            filter.Q.value = 3;
+            let gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            noise.start();
+        }
+
+        function playHumanLaughter() {
+            if (!audioCtx) return;
+            let now = audioCtx.currentTime;
+            for (let j = 0; j < 5; j++) {
+                let startDelay = j * 0.1;
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                let baseFreq = 250 + (j * 40);
+                osc.frequency.setValueAtTime(baseFreq, now + startDelay);
+                osc.frequency.linearRampToValueAtTime(baseFreq + 80, now + startDelay + 0.12);
+                gain.gain.setValueAtTime(0.12, now + startDelay);
+                gain.gain.linearRampToValueAtTime(0.01, now + startDelay + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + startDelay);
+                osc.stop(now + startDelay + 0.3);
+            }
+        }
+
+        function playHumanCry() {
+            if (!audioCtx) return;
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(450, now);
+            osc.frequency.linearRampToValueAtTime(320, now + 0.25);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.02, now + 0.8);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.8);
+        }
+
+        function startCasinoAmbiance() {
+            let bufferSize = audioCtx.sampleRate * 2;
+            let noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            let output = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+            let whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = noiseBuffer;
+            whiteNoise.loop = true;
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 400;
+            filter.Q.value = 1.5;
+            ambianceGain = audioCtx.createGain();
+            ambianceGain.gain.value = 0.012;
+            whiteNoise.connect(filter);
+            filter.connect(ambianceGain);
+            ambianceGain.connect(audioCtx.destination);
+            whiteNoise.start();
+            playJazzLoop();
+        }
+
+        function playJazzLoop() {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            const notes = [220, 261.63, 329.63, 392, 493.88];
+            let note = notes[Math.floor(Math.random() * notes.length)];
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.02, audioCtx.currentTime + 1);
+            gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 3.5);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 3.5);
+            setTimeout(playJazzLoop, 4000);
+        }
+
+        function toggleModal(show) {
+            playButtonSound();
+            document.getElementById("rules-modal").style.display = show ? "flex" : "none";
+        }
+
+        function toggleRaiseModal(show) {
+            playButtonSound();
+            document.getElementById("raise-modal").style.display = show ? "flex" : "none";
+        }
+
+        function selectRaiseAmount(amount) {
+            toggleRaiseModal(false);
+            if (amount > tableChips) {
+                alert("No tienes suficientes fichas en la mesa.");
+                return;
+            }
+            playerAction('raiseCustom', amount);
+        }
+
+        function selectSeat(index) {
+            if (isSeated) return;
+            if (index === 3) {
+                alert("El asiento 3 es exclusivo del cantinero de la casa.");
+                return;
+            }
+            if (occupiedSeats[index]) {
+                alert("Este asiento ya está ocupado.");
+                return;
+            }
+            selectedSeatIndex = index;
+            document.getElementById("message").innerText = `Has seleccionado el Asiento ${index === 0 ? 'Principal' : index}. ¡Elige tu entrada!`;
+            playButtonSound();
+        }
+
+        function sitAtSelectedSeat() {
+            initAudio();
+            if (isSeated) return;
+            let buyin = parseInt(document.getElementById("buyin-amount").value);
+            if (totalBank < buyin) {
+                alert("No tienes suficiente dinero en el banco.");
+                return;
+            }
+
+            totalBank -= buyin;
+            tableChips = buyin;
+            dealerChips = buyin;
+            isSeated = true;
+            occupiedSeats[selectedSeatIndex] = true;
+
+            document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+            document.getElementById(`seat-${selectedSeatIndex}`).classList.add("occupied");
+
+            document.getElementById("player-bank").innerText = `$${totalBank}`;
+            document.getElementById("player-chips").innerText = `$${tableChips}`;
+
+            document.getElementById("buyin-panel").style.display = "none";
+            document.getElementById("leave-panel").style.display = "flex";
+            document.getElementById("action-controls").style.display = "grid";
+            
+            startNewHand();
+        }
+
+        function leaveTable() {
+            if (!isSeated) return;
+            totalBank += tableChips;
+            occupiedSeats[selectedSeatIndex] = false;
+            
+            document.getElementById(`s${selectedSeatIndex}-status`).innerText = `Libre`;
+            document.getElementById(`seat-${selectedSeatIndex}`).classList.remove("occupied");
+
+            isSeated = false;
+            gameRound = 0;
+
+            document.getElementById("player-bank").innerText = `$${totalBank}`;
+            document.getElementById("player-chips").innerText = `$0`;
+
+            document.getElementById("buyin-panel").style.display = "flex";
+            document.getElementById("leave-panel").style.display = "none";
+            document.getElementById("action-controls").style.display = "none";
+
+            document.getElementById("community-cards").innerHTML = "";
+            document.getElementById("dealer-area").innerHTML = "";
+            document.getElementById("player-hand-area").innerHTML = "";
+            document.getElementById("table-pot-val").innerText = `$0`;
+            document.getElementById("message").innerText = "Te has retirado de la mesa. Selecciona un asiento para volver.";
+        }
+
+        function createDeck() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = [
+                { name: '2', val: 2 }, { name: '3', val: 3 }, { name: '4', val: 4 }, 
+                { name: '5', val: 5 }, { name: '6', val: 6 }, { name: '7', val: 7 }, 
+                { name: '8', val: 8 }, { name: '9', val: 9 }, { name: '10', val: 10 }, 
+                { name: 'J', val: 11 }, { name: 'Q', val: 12 }, { name: 'K', val: 13 }, 
+                { name: 'A', val: 14 }
+            ];
+            let newDeck = [];
+            for (let suit of suits) {
+                for (let value of values) newDeck.push({ suit, ...value });
+            }
+            for (let i = newDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
+            }
+            return newDeck;
+        }
+
+        function getChipStackHTML(amount) {
+            let html = '<div class="stack-chips">';
+            let remaining = amount;
+            while (remaining >= 1000) { html += '<div class="chip-3d chip-1000">$1K</div>'; remaining -= 1000; }
+            while (remaining >= 500)  { html += '<div class="chip-3d chip-500">$500</div>'; remaining -= 500; }
+            while (remaining >= 100)  { html += '<div class="chip-3d chip-100">100</div>'; remaining -= 100; }
+            while (remaining >= 50)   { html += '<div class="chip-3d chip-50">50</div>'; remaining -= 50; }
+            html += '</div>';
+            return html;
+        }
+
+        async function startNewHand() {
+            if (!isSeated) return;
+
+            if (tableChips < 50 || dealerChips < 50) {
+                alert(tableChips < 50 ? "Te has quedado sin fichas." : "¡Has arruinado al cantinero! Reiniciando mesa.");
+                if (dealerChips < 50) { totalBank += tableChips + 1000; tableChips = 1000; dealerChips = 1000; }
+                else { leaveTable(); return; }
+            }
+
+            currentBet = 50;
+            tableChips -= currentBet;
+            dealerChips -= currentBet;
+            currentPot = currentBet * 2;
+            winningCardIndices = { hand: [], comm: [] };
+            dealerWinningIndices = { hand: [], comm: [] };
+            roundWinner = null;
+
+            document.getElementById("player-chips").innerText = `$${tableChips}`;
+            document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+            document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+
+            gameRound = 1;
+            deck = createDeck();
+            playerHand = [deck.pop(), deck.pop()];
+            dealerHand = [deck.pop(), deck.pop()]; 
+            fullCommunityCards = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
+            
+            visibleCommunityCount = 0;
+            visiblePlayerCardsCount = 0;
+            visibleDealerCardsCount = 0;
+
+            setButtonsActive(false);
+            document.getElementById("message").innerText = "Repartiendo cartas con aroma a ron...";
+
+            await sleep(300); if(!isSeated) return; playRealCardSound(); visiblePlayerCardsCount = 1; updateUI(false);
+            await sleep(300); if(!isSeated) return; playRealCardSound(); visibleDealerCardsCount = 1; updateUI(false);
+            await sleep(300); if(!isSeated) return; playRealCardSound(); visiblePlayerCardsCount = 2; updateUI(false);
+            await sleep(300); if(!isSeated) return; playRealCardSound(); visibleDealerCardsCount = 2; updateUI(false);
+
+            await sleep(400); if(!isSeated) return; playRealCardSound(); visibleCommunityCount = 3; updateUI(false);
+
+            await executeGovernorAITurn();
+        }
+
+        function evaluatePokerHand(hand, community, countVisible) {
+            let allCards = [...hand.slice(0, 2), ...community.slice(0, countVisible)];
+            let counts = {};
+            let suitsCount = {};
+
+            allCards.forEach(c => {
+                counts[c.val] = (counts[c.val] || 0) + 1;
+                suitsCount[c.suit] = (suitsCount[c.suit] || 0) + 1;
+            });
+
+            let pairs = Object.keys(counts).filter(k => counts[k] === 2).map(Number);
+            let trips = Object.keys(counts).filter(k => counts[k] === 3).map(Number);
+            let quads = Object.keys(counts).filter(k => counts[k] === 4).map(Number);
+            let isFlush = Object.values(suitsCount).some(v => v >= 5);
+
+            let highlightHand = [];
+            let highlightComm = [];
+
+            let matchCard = (val) => {
+                hand.forEach((c, idx) => { if (c.val === val) highlightHand.push(idx); });
+                community.slice(0, countVisible).forEach((c, idx) => { if (c.val === val) highlightComm.push(idx); });
+            };
+
+            if (quads.length > 0) { matchCard(quads[0]); return { name: "Póker", score: 700, h: highlightHand, c: highlightComm }; }
+            if (trips.length > 0 && pairs.length > 0) { matchCard(trips[0]); matchCard(pairs[0]); return { name: "Full House", score: 600, h: highlightHand, c: highlightComm }; }
+            if (isFlush) { return { name: "Color", score: 500, h: [0,1], c: [0,1,2] }; }
+            if (trips.length > 0) { matchCard(trips[0]); return { name: "Trío", score: 300, h: highlightHand, c: highlightComm }; }
+            if (pairs.length >= 2) { matchCard(pairs[0]); matchCard(pairs[1]); return { name: "Doble Pareja", score: 200, h: highlightHand, c: highlightComm }; }
+            if (pairs.length === 1) { matchCard(pairs[0]); return { name: "Pareja", score: 100, h: highlightHand, c: highlightComm }; }
+
+            return { name: "Carta Alta", score: 10, h: [], c: [] };
+        }
+
+        function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        async function executeGovernorAITurn() {
+            if (!isSeated) return;
+            document.getElementById("message").innerText = "🥃 El oponente del bar analiza sus cartas... (3s)";
+            setButtonsActive(false);
+            await sleep(3000);
+            if (!isSeated) return;
+
+            let dealerEval = evaluatePokerHand(dealerHand, fullCommunityCards, visibleCommunityCount);
+
+            if (dealerEval.score >= 300 && dealerChips >= 100) {
+                let betAmount = 100;
+                dealerChips -= betAmount;
+                currentPot += betAmount;
+                document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                document.getElementById("message").innerText = `🥃 ¡El guajiro ataca con mano fuerte (${dealerEval.name}) (+$${betAmount})!`;
+            } else if (dealerEval.score >= 100) {
+                document.getElementById("message").innerText = `🥃 El oponente hace Check. Tu turno en la mesa.`;
+            } else {
+                if (Math.random() < 0.3 && dealerChips >= 50) {
+                    let bluffAmount = 50;
+                    dealerChips -= bluffAmount;
+                    currentPot += bluffAmount;
+                    document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                    document.getElementById("message").innerText = `🥃 ¡El oponente intenta un farol en la cantina (Bet +$${bluffAmount})!`;
+                } else {
+                    document.getElementById("message").innerText = `🥃 El oponente pasa (Check). Te toca decidir.`;
+                }
+            }
+
+            setButtonsActive(true);
+        }
+
+        async function dealerReactionToRaise(raisedAmount) {
+            document.getElementById("message").innerText = "🥃 El oponente evalúa tu subida... (4s)";
+            await sleep(4000);
+            if (!isSeated) return true;
+
+            let dealerEval = evaluatePokerHand(dealerHand, fullCommunityCards, visibleCommunityCount);
+
+            if (dealerEval.score < 100 && raisedAmount >= 100 && Math.random() < 0.75) {
+                document.getElementById("message").innerText = "❌ ¡El oponente consideró su mano muy débil y tiró las cartas (Fold)! Ganaste el pozo.";
+                roundWinner = 'player';
+                let winAmount = currentPot;
+                tableChips += winAmount;
+                playHumanLaughter();
+                updateUI(true);
+                document.getElementById("player-chips").innerText = `$${tableChips}`;
+                document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+                setTimeout(() => { if(isSeated) startNewHand(); }, 5000);
+                return true;
+            } else if (dealerEval.score >= 300 && dealerChips >= raisedAmount) {
+                let reraiseVal = raisedAmount;
+                dealerChips -= reraiseVal;
+                currentPot += reraiseVal;
+                document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                document.getElementById("message").innerText = `🔥 ¡El oponente tiene gran jugada y RESUBE con fuerza +$${reraiseVal}!`;
+                return false;
+            } else {
+                if (dealerChips >= raisedAmount) {
+                    dealerChips -= raisedAmount;
+                    currentPot += raisedAmount;
+                    document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                    document.getElementById("message").innerText = `🥃 El oponente iguala tu apuesta (Call) de $${raisedAmount}.`;
+                } else {
+                    document.getElementById("message").innerText = `🥃 El oponente paga con lo que le queda en fichas.`;
+                }
+                return false;
+            }
+        }
+
+        async function playerAction(action, customAmount = 0) {
+            if (gameRound === 0 || !isSeated) return;
+
+            if (action === 'check') {
+                document.getElementById("message").innerText = "Pasaste (Check). Avanzando ronda...";
+            }
+
+            if (action === 'call') {
+                document.getElementById("message").innerText = "Igualaste la apuesta en la mesa.";
+            }
+
+            if (action === 'fold') {
+                playHumanCry();
+                roundWinner = 'dealer';
+                dealerChips += currentPot;
+                document.getElementById("message").innerText = "❌ Te retiraste (Fold). El bar se lleva el pozo.";
+                setButtonsActive(false);
+                updateUI(true); 
+                setTimeout(() => { if(isSeated) startNewHand(); }, 4000); 
+                return;
+            }
+
+            if (action === 'raiseCustom') {
+                tableChips -= customAmount;
+                currentPot += customAmount;
+                currentBet += customAmount;
+                document.getElementById("player-chips").innerText = `$${tableChips}`;
+                document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+
+                setButtonsActive(false);
+                let folded = await dealerReactionToRaise(customAmount);
+                if (folded) return;
+                setButtonsActive(true);
+            }
+
+            if (action === 'allin') {
+                if (tableChips <= 0) return;
+                let allInVal = tableChips;
+                tableChips = 0;
+                currentPot += allInVal;
+                currentBet += allInVal;
+                document.getElementById("player-chips").innerText = `$${tableChips}`;
+                document.getElementById("table-pot-val").innerText = `$${currentPot}`;
+                document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+                document.getElementById("message").innerText = "⚡ ¡ALL-IN EN EL BAR! El oponente decide...";
+                
+                setButtonsActive(false);
+                await sleep(3000);
+                if (!isSeated) return;
+                
+                let dealerEval = evaluatePokerHand(dealerHand, fullCommunityCards, 5);
+                if (dealerEval.score < 100 && Math.random() < 0.4) {
+                    document.getElementById("message").innerText = "❌ ¡El oponente temió a tu All-In y foldeó!";
+                    roundWinner = 'player';
+                    let winAmount = currentPot;
+                    tableChips += winAmount;
+                    playHumanLaughter();
+                    updateUI(true);
+                    document.getElementById("player-chips").innerText = `$${tableChips}`;
+                    document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+                    setTimeout(() => { if(isSeated) startNewHand(); }, 5000);
+                    return;
+                }
+
+                gameRound = 3;
+                visibleCommunityCount = 5;
+                playRealCardSound();
+                let evalResult = evaluatePokerHand(playerHand, fullCommunityCards, 5);
+                winningCardIndices = { hand: evalResult.h, comm: evalResult.c };
+                dealerWinningIndices = { hand: dealerEval.h, comm: dealerEval.c };
+
+                if (evalResult.score >= dealerEval.score) {
+                    roundWinner = 'player';
+                    let winAmount = currentPot;
+                    tableChips += winAmount;
+                    playHumanLaughter();
+                    document.getElementById("message").innerText = `🎉 ¡DUELO ALL-IN GANADO! +$${winAmount}`;
+                } else {
+                    roundWinner = 'dealer';
+                    dealerChips += currentPot;
+                    playHumanCry();
+                    document.getElementById("message").innerText = `😢 Perdiste el duelo All-In en la cantina.`;
+                }
+
+                updateUI(true);
+                document.getElementById("player-chips").innerText = `$${tableChips}`;
+                document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+                setTimeout(() => { if(isSeated) startNewHand(); }, 6000);
+                return;
+            }
+
+            if (gameRound === 1) {
+                gameRound = 2;
+                visibleCommunityCount = 4; // Turn
+                playRealCardSound();
+                let evalResult = evaluatePokerHand(playerHand, fullCommunityCards, visibleCommunityCount);
+                winningCardIndices = { hand: evalResult.h, comm: evalResult.c };
+
+                document.getElementById("message").innerText = `Ronda 2 (Turn): Tu mano es ${evalResult.name}.`;
+                await executeGovernorAITurn();
+
+            } else if (gameRound === 2) {
+                gameRound = 3;
+                visibleCommunityCount = 5; // River
+                playRealCardSound();
+                let evalResult = evaluatePokerHand(playerHand, fullCommunityCards, visibleCommunityCount);
+                winningCardIndices = { hand: evalResult.h, comm: evalResult.c };
+
+                let dealerEval = evaluatePokerHand(dealerHand, fullCommunityCards, 5);
+                dealerWinningIndices = { hand: dealerEval.h, comm: dealerEval.c };
+
+                if (evalResult.score >= dealerEval.score) {
+                    roundWinner = 'player';
+                    let winAmount = currentPot;
+                    tableChips += winAmount;
+                    playHumanLaughter(); 
+                    document.getElementById("message").innerText = `🎉 ¡GANASTE (${evalResult.name}) al oponente (${dealerEval.name})! +$${winAmount}`;
+                } else {
+                    roundWinner = 'dealer';
+                    dealerChips += currentPot;
+                    playHumanCry(); 
+                    document.getElementById("message").innerText = `😢 El oponente gana con ${dealerEval.name} frente a tu ${evalResult.name}.`;
+                }
+
+                updateUI(true); 
+
+                document.getElementById("player-chips").innerText = `$${tableChips}`;
+                document.getElementById(`s${selectedSeatIndex}-status`).innerText = `$${tableChips}`;
+
+                setTimeout(() => { if(isSeated) startNewHand(); }, 6000); 
+            }
+        }
+
+        function setButtonsActive(active) {
+            let btns = document.querySelectorAll('.neon-btn');
+            btns.forEach(b => {
+                if(!b.classList.contains('btn-start') && !b.classList.contains('btn-leave')) b.disabled = !active;
+            });
+        }
+
+        function updateUI(showDealer) {
+            if (!isSeated) return;
+            let commContainer = document.getElementById("community-cards");
+            commContainer.innerHTML = "";
+            for (let i = 0; i < visibleCommunityCount; i++) {
+                let card = fullCommunityCards[i];
+                let isRed = card.suit === '♥' || card.suit === '♦';
+                let glowClass = '';
+                if (showDealer) {
+                    if (roundWinner === 'player' && winningCardIndices.comm.includes(i)) glowClass = 'gold-glow';
+                    else if (roundWinner === 'dealer' && dealerWinningIndices.comm.includes(i)) glowClass = 'red-glow';
+                }
+                commContainer.innerHTML += `<div class="card ${isRed ? 'red' : ''} ${glowClass}"><span>${card.name}</span><span style="font-size:7px; text-align:center;">${card.suit}</span><span style="transform: rotate(180deg);">${card.name}</span></div>`;
+            }
+
+            let dealerArea = document.getElementById("dealer-area");
+            dealerArea.innerHTML = "";
+            if (isSeated && gameRound > 0) {
+                let dealerHtml = `<div style="font-size:8px; color:#fbbf24; margin-bottom:1px;">CANTINERO ($${dealerChips})</div><div style="display:flex; gap:2px;">`;
+                for (let i = 0; i < visibleDealerCardsCount; i++) {
+                    let card = dealerHand[i];
+                    if (!showDealer) {
+                        dealerHtml += `<div class="card card-back">🥃</div>`;
+                    } else {
+                        let isRed = card.suit === '♥' || card.suit === '♦';
+                        let glowClass = '';
+                        if (roundWinner === 'dealer' && dealerWinningIndices.hand.includes(i)) glowClass = 'gold-glow';
+                        else if (roundWinner === 'player') glowClass = 'red-glow';
+                        dealerHtml += `<div class="card ${isRed ? 'red' : ''} ${glowClass}"><span>${card.name}</span><span style="font-size:7px; text-align:center;">${card.suit}</span><span style="transform: rotate(180deg);">${card.name}</span></div>`;
+                    }
+                }
+                dealerHtml += '</div>';
+                dealerArea.innerHTML = dealerHtml;
+            }
+
+            let playerArea = document.getElementById("player-hand-area");
+            playerArea.innerHTML = "";
+            if (isSeated && gameRound > 0) {
+                playerArea.innerHTML += getChipStackHTML(currentBet);
+                let cardsHtml = '<div style="display:flex; gap:2px;">';
+                for (let i = 0; i < visiblePlayerCardsCount; i++) {
+                    let card = playerHand[i];
+                    let isRed = card.suit === '♥' || card.suit === '♦';
+                    let glowClass = '';
+                    if (showDealer) {
+                        if (roundWinner === 'player' && winningCardIndices.hand.includes(i)) glowClass = 'gold-glow';
+                        else if (roundWinner === 'dealer') glowClass = 'red-glow';
+                    }
+                    cardsHtml += `<div class="card ${isRed ? 'red' : ''} ${glowClass}"><span>${card.name}</span><span style="font-size:7px; text-align:center;">${card.suit}</span><span style="transform: rotate(180deg);">${card.name}</span></div>`;
+                }
+                cardsHtml += '</div>';
+                playerArea.innerHTML += cardsHtml;
+            }
+        }
+    </script>
+</body>
+</html>

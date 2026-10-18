@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Poker Pro - Sala Online con Copiar Código</title>
+    <!-- Librería PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            background-color: #060301;
+            background-image: radial-gradient(circle at center, #1f0b04 0%, #060301 100%);
+            color: #fef3c7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .game-app-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 6px 0;
+        }
+
+        /* HUD Superior */
+        .top-hud-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 50;
+        }
+
+        .hud-btn {
+            background: linear-gradient(to bottom, #78350f, #3b1d0c);
+            border: 1px solid #fbbf24;
+            color: #fef3c7;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.8);
+            cursor: pointer;
+        }
+
+        .hud-info-badge {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid #fbbf24;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: #fde047;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+        }
+
+        /* Notificación Flotante */
+        .floating-notification {
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 2px solid #fbbf24;
+            color: #fde047;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 5px 14px;
+            border-radius: 20px;
+            z-index: 99;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.9);
+            display: none;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Mesa Central */
+        .table-view-port {
+            position: relative;
+            width: 340px;
+            height: 380px;
+            margin: 10px auto 0 auto;
+            background: 
+                radial-gradient(circle at center, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.9) 85%),
+                repeating-linear-gradient(90deg, #3b1d0c, #3b1d0c 20px, #1a0c05 20px, #1a0c05 40px);
+            border: 14px solid #120602;
+            border-radius: 160px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.95), inset 0 0 40px rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-felt-inner {
+            width: 295px;
+            height: 335px;
+            background: radial-gradient(circle, #065f46 0%, #022c22 90%);
+            border: 2px solid rgba(251, 191, 36, 0.5);
+            border-radius: 130px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            position: relative;
+            box-shadow: inset 0 0 35px rgba(0,0,0,0.85);
+        }
+
+        .pot-display-bros {
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #fbbf24;
+            border-radius: 14px;
+            padding: 3px 14px;
+            font-size: 10px;
+            color: #fde047;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        .community-cards-box {
+            display: flex;
+            gap: 4px;
+            min-height: 42px;
+            align-items: center;
+        }
+
+        .card {
+            background: #ffffff;
+            color: #000000;
+            width: 28px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2px;
+            font-weight: bold;
+            font-size: 9px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+            border: 1px solid #cbd5e1;
+        }
+        .card.red { color: #dc2626; }
+        .card-back {
+            background: linear-gradient(135deg, #7f1d1d, #450a0a);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            border: 1px solid #f87171;
+        }
+
+        /* Asientos */
+        .player-seat-card {
+            position: absolute;
+            width: 76px;
+            height: 52px;
+            background: rgba(20, 10, 5, 0.9);
+            border: 2px solid #78350f;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 25;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+            transition: transform 0.1s;
+        }
+        .player-seat-card:active { transform: scale(0.95); }
+        .player-seat-card.active-seated {
+            background: rgba(6, 95, 70, 0.95);
+            border-color: #34d399;
+            cursor: default;
+        }
+
+        .seat-avatar-icon { font-size: 18px; margin-top: -2px; }
+        .seat-data-text { font-size: 7.5px; color: #fef3c7; font-weight: bold; line-height: 1.1; }
+        .seat-chips-text { font-size: 8px; color: #34d399; font-weight: bold; }
+
+        #seat-0 { bottom: -12px; left: 50%; transform: translateX(-50%); } 
+        #seat-1 { bottom: 65px; left: -18px; }                           
+        #seat-2 { top: 65px; left: -18px; }                              
+        #seat-3 { top: -16px; left: 50%; transform: translateX(-50%); border-color: #f59e0b; }  
+        #seat-4 { top: 65px; right: -18px; }                             
+
+        .dealer-cards-slot { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; }
+        .player-cards-slot { position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; }
+
+        /* Panel Inferior */
+        .bros-control-panel {
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #2c1408, #110803);
+            border-top: 3px solid #b45309;
+            padding: 8px 10px;
+            box-sizing: border-box;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.9);
+        }
+
+        .bros-action-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .bros-btn {
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 9px;
+            padding: 11px 2px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.7);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        .bros-btn:active { transform: scale(0.95); }
+        .btn-fold-bros { background: linear-gradient(to bottom, #dc2626, #991b1b); }
+        .btn-check-bros { background: linear-gradient(to bottom, #2563eb, #1d4ed8); }
+        .btn-call-bros { background: linear-gradient(to bottom, #059669, #047857); }
+        .btn-raise-bros { background: linear-gradient(to bottom, #d97706, #b45309); }
+
+        .bros-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #0d0402;
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid #78350f;
+        }
+        .slider-input {
+            flex: 1;
+            accent-color: #fbbf24;
+            cursor: pointer;
+        }
+        .bros-bet-display {
+            background: #1c0d05;
+            border: 1px solid #fbbf24;
+            color: #fde047;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 6px;
+            min-width: 48px;
+        }
+
+        /* Modales */
+        .modal-bg-bros {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.88);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-box-bros {
+            background: #1c0d05;
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 310px;
+            padding: 16px;
+            color: #fef3c7;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(251,191,36,0.4);
+        }
+        .buyin-input {
+            width: 100%;
+            background: #0d0402;
+            border: 1px solid #fbbf24;
+            color: #fde047;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-app-container">
+        <!-- Notificación flotante -->
+        <div id="floating-notice" class="floating-notification">¡Aviso!</div>
+
+        <!-- HUD Superior -->
+        <div class="top-hud-bar">
+            <button class="hud-btn" onclick="openOnlineMenu()">ONLINE 🌐</button>
+            <div class="hud-info-badge">BANCO: $<span id="bank-val">1000</span></div>
+            <button class="hud-btn" onclick="toggleModal(true, 'help-modal')">?</button>
+        </div>
+
+        <!-- Mesa Central -->
+        <div class="table-view-port">
+            <div class="table-felt-inner">
+                <div class="pot-display-bros">POZO: $<span id="pot-val">0</span></div>
+                <div style="font-size:7px; color:#fde047; letter-spacing:1px; font-weight:bold;" id="game-status-label">CREA O ÚNETE A UNA SALA ONLINE</div>
+                <div id="community-cards" class="community-cards-box"></div>
+            </div>
+
+            <!-- Asientos -->
+            <div id="seat-0" class="player-seat-card" onclick="openBuyInModal(0)">
+                <div class="seat-avatar-icon">🤠</div>
+                <div class="seat-data-text">Tú</div>
+                <div class="seat-chips-text" id="s0-status">Libre +</div>
+            </div>
+            <div id="seat-1" class="player-seat-card" onclick="openBuyInModal(1)">
+                <div class="seat-avatar-icon">🎩</div>
+                <div class="seat-data-text" id="s1-label">Player 1</div>
+                <div class="seat-chips-text" id="s1-status">Libre +</div>
+            </div>
+            <div id="seat-2" class="player-seat-card" onclick="openBuyInModal(2)">
+                <div class="seat-avatar-icon">👒</div>
+                <div class="seat-data-text">Player 2</div>
+                <div class="seat-chips-text" id="s2-status">Libre +</div>
+            </div>
+            <div id="seat-3" class="player-seat-card" style="cursor: default; border-color:#fde047;">
+                <div class="seat-avatar-icon">⭐</div>
+                <div class="seat-data-text" style="color:#fbbf24;">Sheriff</div>
+                <div class="seat-chips-text" id="s3-status">$1000</div>
+            </div>
+            <div id="seat-4" class="player-seat-card" onclick="openBuyInModal(4)">
+                <div class="seat-avatar-icon">🧢</div>
+                <div class="seat-data-text">Player 4</div>
+                <div class="seat-chips-text" id="s4-status">Libre +</div>
+            </div>
+
+            <div id="dealer-cards-slot" class="dealer-cards-slot"></div>
+            <div id="player-cards-slot" class="player-cards-slot"></div>
+        </div>
+
+        <!-- Panel Inferior -->
+        <div class="bros-control-panel">
+            <div class="bros-action-grid">
+                <button class="bros-btn btn-fold-bros" onclick="playSnd(); handleAction('fold')">FOLD</button>
+                <button class="bros-btn btn-check-bros" onclick="playSnd(); handleAction('check')">CHECK</button>
+                <button class="bros-btn btn-call-bros" onclick="playSnd(); handleAction('call')">CALL</button>
+                <button class="bros-btn btn-raise-bros" onclick="playSnd(); handleAction('raise')">APOSTAR</button>
+            </div>
+            <div class="bros-slider-row">
+                <input type="range" min="50" max="500" value="50" class="slider-input" id="bet-slider" oninput="updateBetVal(this.value)">
+                <div class="bros-bet-display" id="bet-display">$50</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Menú Online -->
+    <div class="modal-bg-bros" id="online-modal">
+        <div class="modal-box-bros">
+            <h3 style="color:#fbbf24; margin-top:0; font-size:14px;">🌐 Multijugador Online</h3>
+            <p style="font-size:10px; color:#cbd5e1;">Crea una sala y copia el código para enviárselo a tu amigo, o introduce el código de tu amigo para unirte.</p>
+            
+            <div id="host-section" style="margin: 8px 0;">
+                <button class="hud-btn" style="width:100%; background:#047857; padding:8px;" onclick="hostGame()">Crear Nueva Sala</button>
+                <div style="display:flex; gap:6px; margin-top:6px;">
+                    <input type="text" id="room-code-display" class="buyin-input" readonly placeholder="Código de Sala" style="margin:0; font-size:11px; padding:4px;">
+                    <button class="hud-btn" style="background:#b45309; padding:4px 8px;" onclick="copyRoomCode()">📋 Copiar</button>
+                </div>
+            </div>
+
+            <hr style="border-color:#78350f; margin:8px 0;">
+
+            <div id="join-section" style="margin: 8px 0;">
+                <input type="text" id="join-code-input" class="buyin-input" placeholder="Introduce Código de Sala" style="font-size:11px; margin-bottom:6px;">
+                <button class="hud-btn" style="width:100%; background:#1d4ed8; padding:8px;" onclick="joinGame()">Unirse a Sala</button>
+            </div>
+            <button class="hud-btn" style="width:100%; background:#991b1b; margin-top:6px;" onclick="toggleModal(false, 'online-modal')">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- Modal Buy-in -->
+    <div class="modal-bg-bros" id="buyin-modal">
+        <div class="modal-box-bros">
+            <h3 style="color:#fbbf24; margin-top:0; font-size:14px;">🤠 Entrada a la Mesa</h3>
+            <p style="font-size:10px; color:#cbd5e1;">Elige cuántas fichas llevarás al asiento[span_0](start_span)[span_0](end_span):</p>
+            <input type="number" id="buyin-input-val" class="buyin-input" value="500" min="50" max="1000">
+            <div style="display:flex; gap:6px;">
+                <button class="hud-btn" style="flex:1; background:#991b1b;" onclick="toggleModal(false, 'buyin-modal')">Cancelar</button>
+                <button class="hud-btn" style="flex:1; background:#047857;" onclick="confirmSitDown()">Sentarse</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ayuda -->
+    <div class="modal-bg-bros" id="help-modal">
+        <div class="modal-box-bros">
+            <h3 style="color:#fbbf24; margin-top:0; font-size:13px;">♠️ Instrucciones Online 🤠</h3>
+            <p style="font-size:10px; line-height:1.4; text-align:left;">1. Un jugador hace clic en <b>ONLINE</b> y crea sala.<br>2. Toca el botón <b>📋 Copiar</b> y pásale el código a tu amigo por WhatsApp/Telegram.<br>3. Tu amigo lo pega y se conecta a tu mesa.</p>
+            <button class="hud-btn" style="width:100%; margin-top:8px;" onclick="toggleModal(false, 'help-modal')">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+        let bank = 1000;
+        let myChips = 0;
+        let sheriffChips = 1000;
+        let pot = 0;
+        let activeSeat = -1;
+        let pendingSeatIndex = -1;
+        let occupied = { 0: false, 1: false, 2: false, 3: true, 4: false };
+        let audioCtx = null;
+
+        let currentRound = 0;
+        let deck = [];
+        let playerHand = [];
+        let sheriffHand = [];
+        let communityCards = [];
+
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+
+        function playSnd() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        function showNotification(msg) {
+            let note = document.getElementById("floating-notice");
+            note.innerText = msg;
+            note.style.display = "block";
+            setTimeout(() => { note.style.display = "none"; }, 2500);
+        }
+
+        function toggleModal(show, modalId) {
+            playSnd();
+            document.getElementById(modalId).style.display = show ? "flex" : "none";
+        }
+
+        function openOnlineMenu() {
+            toggleModal(true, 'online-modal');
+        }
+
+        function hostGame() {
+            peer = new Peer();
+            isHost = true;
+            peer.on('open', (id) => {
+                document.getElementById("room-code-display").value = id;
+                showNotification("¡Sala creada! Copia el código.");
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnection();
+                showNotification("¡Amigo conectado a tu mesa!");
+                toggleModal(false, 'online-modal');
+                occupied[1] = true;
+                document.getElementById("s1-label").innerText = "Amigo";
+                document.getElementById("s1-status").innerText = "$500";
+                document.getElementById("seat-1").classList.add("active-seated");
+            });
+        }
+
+        function copyRoomCode() {
+            let codeInput = document.getElementById("room-code-display");
+            if (!codeInput.value) {
+                alert("Primero crea una sala.");
+                return;
+            }
+            codeInput.select();
+            codeInput.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(codeInput.value).then(() => {
+                showNotification("¡Código copiado al portapapeles!");
+            }).catch(() => {
+                alert("No se pudo copiar automáticamente. Selecciónalo manualmente.");
+            });
+        }
+
+        function joinGame() {
+            let codeToJoin = document.getElementById("join-code-input").value.trim();
+            if (!codeToJoin) {
+                alert("Introduce un código de sala válido.");
+                return;
+            }
+            peer = new Peer();
+            isHost = false;
+            peer.on('open', () => {
+                conn = peer.connect(codeToJoin);
+                setupConnection();
+                showNotification("Conectando con la sala...");
+                toggleModal(false, 'online-modal');
+            });
+        }
+
+        function setupConnection() {
+            conn.on('data', (data) => {
+                if (data.type === 'action') {
+                    showNotification(`Amigo hizo: ${data.action.toUpperCase()}`);
+                }
+                if (data.type === 'state') {
+                    pot = data.pot;
+                    communityCards = data.communityCards;
+                    document.getElementById("pot-val").innerText = pot;
+                    renderTableState();
+                }
+            });
+        }
+
+        function sendDataToPeer(data) {
+            if (conn && conn.open) {
+                conn.send(data);
+            }
+        }
+
+        function openBuyInModal(index) {
+            if (activeSeat !== -1) return;
+            if (occupied[index]) return;
+            if (bank <= 0) {
+                showNotification("¡Estás en bancarrota!");
+                return;
+            }
+            pendingSeatIndex = index;
+            document.getElementById("buyin-input-val").max = bank;
+            document.getElementById("buyin-input-val").value = Math.min(500, bank);
+            toggleModal(true, 'buyin-modal');
+        }
+
+        function confirmSitDown() {
+            let buyinAmt = parseInt(document.getElementById("buyin-input-val").value);
+            if (isNaN(buyinAmt) || buyinAmt < 50 || buyinAmt > bank) return;
+
+            bank -= buyinAmt;
+            myChips = buyinAmt;
+            activeSeat = pendingSeatIndex;
+            occupied[activeSeat] = true;
+
+            document.getElementById("bank-val").innerText = bank;
+            document.getElementById(`s${activeSeat}-status`).innerText = `$${myChips}`;
+            document.getElementById(`seat-${activeSeat}`).classList.add("active-seated");
+
+            toggleModal(false, 'buyin-modal');
+            playSnd();
+
+            let slider = document.getElementById("bet-slider");
+            slider.min = 50;
+            slider.max = myChips;
+            slider.value = 50;
+            updateBetVal(slider.value);
+
+            startNewHand();
+        }
+
+        function updateBetVal(val) {
+            document.getElementById("bet-display").innerText = `$${val}`;
+        }
+
+        function startNewHand() {
+            if (myChips <= 0 && bank <= 0) {
+                showNotification("¡Bancarrota!");
+                return;
+            }
+
+            currentRound = 1; 
+            pot = 100; 
+            myChips -= 50;
+            sheriffChips -= 50;
+
+            document.getElementById("bank-val").innerText = bank;
+            document.getElementById("pot-val").innerText = pot;
+            document.getElementById(`s${activeSeat}-status`).innerText = `$${myChips}`;
+            document.getElementById("game-status-label").innerText = "RONDA 1: APUESTA PRE-FLOP";
+
+            deck = createDeck();
+            playerHand = [];
+            sheriffHand = [];
+            communityCards = [];
+
+            playerHand.push(deck.pop());
+            sheriffHand.push(deck.pop());
+            playerHand.push(deck.pop());
+            sheriffHand.push(deck.pop());
+
+            renderTableState();
+            
+            if (isHost) {
+                sendDataToPeer({ type: 'state', pot, communityCards });
+            }
+        }
+
+        function createDeck() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const vals = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+            let d = [];
+            for(let s of suits) {
+                for(let v of vals) d.push({suit: s, val: v});
+            }
+            return d.sort(() => Math.random() - 0.5);
+        }
+
+        function renderTableState() {
+            let commHtml = "";
+            for (let i = 0; i < communityCards.length; i++) {
+                let c = communityCards[i];
+                let isRed = c.suit === '♥' || c.suit === '♦';
+                commHtml += `<div class="card ${isRed ? 'red' : ''}"><span>${c.val}</span><span>${c.suit}</span><span style="transform:rotate(180deg)">${c.val}</span></div>`;
+            }
+            document.getElementById("community-cards").innerHTML = commHtml;
+
+            let dealerHtml = `<div style="display:flex; gap:3px;">`;
+            for (let i = 0; i < sheriffHand.length; i++) {
+                if (currentRound < 4) {
+                    dealerHtml += `<div class="card card-back">🤠</div>`;
+                } else {
+                    let c = sheriffHand[i];
+                    let isRed = c.suit === '♥' || c.suit === '♦';
+                    dealerHtml += `<div class="card ${isRed ? 'red' : ''}"><span>${c.val}</span><span>${c.suit}</span><span style="transform:rotate(180deg)">${c.val}</span></div>`;
+                }
+            }
+            dealerHtml += `</div>`;
+            document.getElementById("dealer-cards-slot").innerHTML = dealerHtml;
+
+            let playerHtml = `<div style="display:flex; gap:3px;">`;
+            for (let i = 0; i < playerHand.length; i++) {
+                let c = playerHand[i];
+                let isRed = c.suit === '♥' || c.suit === '♦';
+                playerHtml += `<div class="card ${isRed ? 'red' : ''}"><span>${c.val}</span><span>${c.suit}</span><span style="transform:rotate(180deg)">${c.val}</span></div>`;
+            }
+            playerHtml += `</div>`;
+            document.getElementById("player-cards-slot").innerHTML = playerHtml;
+        }
+
+        function handleAction(type) {
+            if (activeSeat === -1) return;
+            playSnd();
+
+            let betAmt = parseInt(document.getElementById("bet-slider").value);
+
+            if (type === 'fold') {
+                showNotification("Te retiraste. La casa se lleva el pozo.");
+                pot = 0;
+                document.getElementById("pot-val").innerText = pot;
+                setTimeout(() => { startNewHand(); }, 1200);
+                return;
+            }
+
+            if (type === 'raise' || type === 'call' || type === 'check') {
+                if (type === 'raise' || type === 'call') {
+                    if (myChips < betAmt) betAmt = myChips;
+                    myChips -= betAmt;
+                    pot += betAmt;
+                    document.getElementById(`s${activeSeat}-status`).innerText = `$${myChips}`;
+                    document.getElementById("pot-val").innerText = pot;
+                }
+            }
+
+            sendDataToPeer({ type: 'action', action: type });
+
+            if (currentRound === 1) {
+                currentRound = 2;
+                communityCards.push(deck.pop(), deck.pop(), deck.pop());
+                document.getElementById("game-status-label").innerText = "RONDA 2: FLOP (3 CARTAS)";
+            } else if (currentRound === 2) {
+                currentRound = 3;
+                communityCards.push(deck.pop());
+                document.getElementById("game-status-label").innerText = "RONDA 3: TURN (4TA CARTA)";
+            } else if (currentRound === 3) {
+                currentRound = 4;
+                communityCards.push(deck.pop());
+                document.getElementById("game-status-label").innerText = "RONDA FINAL: RIVER (5TA CARTA)";
+            } else if (currentRound === 4) {
+                let playerWins = Math.random() >= 0.5;
+                renderTableState();
+
+                if (playerWins) {
+                    myChips += pot;
+                    document.getElementById(`s${activeSeat}-status`).innerText = `$${myChips}`;
+                    showNotification(`¡Victoria! +$${pot}`);
+                } else {
+                    showNotification("El Sheriff se adjudicó el pozo.");
+                }
+                
+                pot = 0;
+                document.getElementById("pot-val").innerText = pot;
+
+                setTimeout(() => { startNewHand(); }, 2000);
+                return;
+            }
+
+            renderTableState();
+            if (isHost) {
+                sendDataToPeer({ type: 'state', pot, communityCards });
+            }
+
+            let slider = document.getElementById("bet-slider");
+            slider.max = Math.max(10, myChips);
+        }
+
+        function leaveTable() {
+            if (activeSeat === -1) return;
+            bank += myChips;
+            document.getElementById("bank-val").innerText = bank;
+            document.getElementById(`s${activeSeat}-status`).innerText = `Libre +`;
+            document.getElementById(`seat-${activeSeat}`).classList.remove("active-seated");
+            occupied[activeSeat] = false;
+            activeSeat = -1;
+            currentRound = 0;
+
+            document.getElementById("community-cards").innerHTML = "";
+            document.getElementById("dealer-cards-slot").innerHTML = "";
+            document.getElementById("player-cards-slot").innerHTML = "";
+            document.getElementById("pot-val").innerText = "0";
+            document.getElementById("game-status-label").innerText = "CREA O ÚNETE A UNA SALA ONLINE";
+        }
+    </script>
+</body>
+</html>
